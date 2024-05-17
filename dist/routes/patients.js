@@ -134,23 +134,7 @@ router.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(500).json({ error: "Could not delete patient" });
     }
 }));
-// router.put("/:id", async (req, res) => {
-//     //todo first find course:
-//
-//         const course = courses.find(c => c.id === parseInt(req.params.id))
-//         if (!course) {
-//             return res.status(404).send(`The course with id ${req.params.id} not found`);
-//         }
-//
-//         const {error} = ValidateCourse(req.body) //todo this is called object destructuring
-//
-//         if (error) {
-//             return res.status(400).send(error.details[0].message)
-//         }
-//         course.name = req.body.name;
-//         course.teacher = req.body.teacher;
-//         res.send(req.body);
-//     });
+
 function ValidatePatient(patient) {
     const schema = joi_1.default.object({
         petName: joi_1.default.string().min(5).required(),
