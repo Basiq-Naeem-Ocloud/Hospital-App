@@ -4,10 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-// const mongoose = require('mongoose')
 const mongoose_1 = __importDefault(require("mongoose"));
-// const courses = require('./routes/courses')
-const patients = require('./routes/patients');
+// const router = require('./routes/patients')
+const patients_1 = require("./routes/patients");
+const appointments = require('./routes/appointments');
 mongoose_1.default.connect("mongodb://localhost/Hospital")
     .then(() => console.log("connected to mongo db..."))
     .catch((error) => {
@@ -16,11 +16,8 @@ mongoose_1.default.connect("mongodb://localhost/Hospital")
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 const port = 3000;
-// app.use('/api/courses',courses)
-app.use('/api/patients', patients);
-// app.get('/', (req, res) => {
-//   res.send('Hello World!')
-// })
+app.use('/api/patients', patients_1.patientRoutes);
+app.use('/api/appointments', appointments);
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });

@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Patient = exports.patientRoutes = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const express_1 = __importDefault(require("express"));
 const router = express_1.default.Router();
-// const Joi = require("joi");
+exports.patientRoutes = router;
 const joi_1 = __importDefault(require("joi"));
 const patientSchema = new mongoose_1.default.Schema({
     petName: {
@@ -33,7 +34,7 @@ const patientSchema = new mongoose_1.default.Schema({
     ownerName: {
         type: String,
         required: true,
-        minLength: 5,
+        minLength: 4,
         maxLength: 20
     },
     ownerAddress: {
@@ -56,11 +57,12 @@ const patientSchema = new mongoose_1.default.Schema({
     }
 });
 const Patient = mongoose_1.default.model("Patient", patientSchema);
+exports.Patient = Patient;
 //getting all patients 
 router.get("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const courses = yield Patient.find();
-    console.log("Inside courses get");
-    res.send(courses);
+    console.log("inside get all patients");
+    const patient = yield Patient.find();
+    res.send(patient);
 }));
 //add a new patient
 router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -86,12 +88,12 @@ router.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         console.error("Error adding patient:", error);
-        res.status(500).json({ error: "Could not add patient" });
+        // res.status(500).json({error.message: "Could not add patient"});
+        res.status(500).json({ error });
     }
 }));
 //updating 
 router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("inside put");
     const { error } = ValidatePatient(req.body);
     if (error)
         return res.status(400).send(error.details[0].message);
@@ -101,7 +103,7 @@ router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         // Find the patient by ID
         let patient = yield Patient.findById(id);
         if (!patient) {
-            return res.status(404).json({ error: "Patient not found" });
+            return res.status(404).json({ error: "Patient with the given id not found" });
         }
         // Update patient properties
         patient.petName = petName;
@@ -114,8 +116,13 @@ router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         res.json(updatedPatient);
     }
     catch (error) {
-        console.error("Error updating patient:", error);
-        res.status(500).json({ error: "Could not update patient" });
+        console.error("Error updating patient", error.name);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: "Could not update patient" });
+        }
     }
 }));
 //delete
@@ -125,24 +132,27 @@ router.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         // Find the patient by ID and delete it
         const deletedPatient = yield Patient.findByIdAndDelete(id);
         if (!deletedPatient) {
-            return res.status(404).json({ error: "Patient not found" });
+            return res.status(404).json({ error: "Patient with the given id not found" });
         }
         res.json({ message: "Patient deleted successfully", deletedPatient });
     }
     catch (error) {
-        console.error("Error deleting patient:", error);
-        res.status(500).json({ error: "Could not delete patient" });
+        console.error("Error deleting patient", error.name);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ error: error.message });
+        }
+        else {
+            res.status(500).json({ error: "Could not delete patient" });
+        }
     }
 }));
-
 function ValidatePatient(patient) {
     const schema = joi_1.default.object({
         petName: joi_1.default.string().min(5).required(),
         petType: joi_1.default.string().required(),
-        ownerName: joi_1.default.string().min(5).required(),
+        ownerName: joi_1.default.string().min(4).required(),
         ownerAddress: joi_1.default.string().min(5).required(),
         ownerPhoneNumber: joi_1.default.string().length(11).required()
     });
-    return schema.validate(patient); // Change course to patient
+    return schema.validate(patient);
 }
-module.exports = router;

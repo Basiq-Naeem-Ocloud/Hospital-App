@@ -23,7 +23,7 @@ const patientSchema = new mongoose.Schema({
     ownerName: {
         type: String,
         required: true,
-        minLength: 5,
+        minLength: 4,
         maxLength: 20
     },
     ownerAddress: {
@@ -39,7 +39,7 @@ const patientSchema = new mongoose.Schema({
         maxlength: 11,
         validate: {
             validator: function (v: string) {
-                return v && v.length >= 11 && v.length < 12 // Ensuring it contains exactly 12 digits
+                return v && v.length >= 11 && v.length < 12
             },
             message:  'ownerPhoneNumber is not a valid 11-digit phone number!'
         },
@@ -51,7 +51,7 @@ const Patient = mongoose.model("Patient", patientSchema);
 
 //getting all patients 
 router.get("/", async (req: Request, res: Response) => {
-
+    console.log("inside get all patients")
     const patient = await Patient.find();
     res.send(patient);
 });
@@ -61,7 +61,7 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
 
     //validating data before inserting in db
-    const {error} = ValidatePatient(req.body) // object destructuring
+    const {error} = ValidatePatient(req.body)
 
     if (error) {
         return res.status(400).send(error.details[0].message)
@@ -72,7 +72,6 @@ router.post("/", async (req: Request, res: Response) => {
         console.log(req.body)
         const {petName, petType, ownerName, ownerAddress, ownerPhoneNumber} = req.body;
 
-        // Create a new patient instance
         const newPatient = new Patient({
             petName,
             petType,
@@ -82,7 +81,6 @@ router.post("/", async (req: Request, res: Response) => {
 
         });
 
-        // Save the new patient to the database
         const savedPatient = await newPatient.save();
 
         res.status(201).json(savedPatient);
@@ -90,7 +88,7 @@ router.post("/", async (req: Request, res: Response) => {
     catch (error)
     {
         console.error("Error adding patient:", error);
-        res.status(500).json({error: "Could not add patient"});
+        res.status(500).json({error});
     }
 });
 
@@ -109,7 +107,7 @@ router.put('/:id', async (req, res) => {
         let patient = await Patient.findById(id);
 
         if (!patient) {
-            return res.status(404).json({ error: "Patient not found" });
+            return res.status(404).json({ error: "Patient with the given id not found" });
         }
 
         // Update patient properties
@@ -124,9 +122,15 @@ router.put('/:id', async (req, res) => {
 
         res.json(updatedPatient);
 
-    } catch (error) {
-        console.error("Error updating patient:", error);
-        res.status(500).json({ error: "Could not update patient" });
+    }
+    catch (error: any)
+    {
+        console.error("Error updating patient", error.name);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({error: error.message});
+        } else {
+            res.status(500).json({error: "Could not update patient"});
+        }
     }
 });
 
@@ -139,13 +143,18 @@ router.delete("/:id", async (req: Request, res: Response) => {
         const deletedPatient = await Patient.findByIdAndDelete(id);
 
         if (!deletedPatient) {
-            return res.status(404).json({ error: "Patient not found" });
+            return res.status(404).json({ error: "Patient with the given id not found" });
         }
 
         res.json({ message: "Patient deleted successfully", deletedPatient });
-    } catch (error) {
-        console.error("Error deleting patient:", error);
-        res.status(500).json({ error: "Could not delete patient" });
+    }
+    catch (error: any) {
+        console.error("Error deleting patient", error.name);
+        if (error.name === "ValidationError") {
+            return res.status(400).json({error: error.message});
+        } else {
+            res.status(500).json({error: "Could not delete patient"});
+        }
     }
 });
 
@@ -153,11 +162,12 @@ function ValidatePatient(patient: any) {
     const schema = Joi.object({
         petName: Joi.string().min(5).required(),
         petType: Joi.string().required(),
-        ownerName: Joi.string().min(5).required(),
+        ownerName: Joi.string().min(4).required(),
         ownerAddress: Joi.string().min(5).required(),
         ownerPhoneNumber: Joi.string().length(11).required()
     });
     return schema.validate(patient);
 }
 
-module.exports = router;
+export { router as patientRoutes };
+export { Patient };
