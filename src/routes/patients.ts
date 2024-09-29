@@ -1,7 +1,8 @@
-import mongoose from "mongoose"
+import mongoose, {Schema} from "mongoose"
 import express, {Request, Response} from "express";
 
 const router = express.Router();
+// const Joi = require("joi");
 import Joi from "joi"
 
 
